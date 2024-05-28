@@ -1,4 +1,4 @@
-# puma-robot
+# duck
 
 # Dependencies
 
