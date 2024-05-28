@@ -8,6 +8,20 @@
 #include "../debug/DebugUI.h"
 #include <glm/gtc/type_ptr.hpp>
 
+void Gui::showSceneWindow() {
+
+    showScene();
+
+    ImGui::Begin("Scene Window");
+    renderCameraUI();
+    renderWaterUI();
+    renderSeaFloorUI();
+    renderPerlinUI();
+    renderSkyUI();
+    renderDuckUI();
+    ImGui::End();
+}
+
 Gui::Gui(AppContext &appContext, GLFWwindow *window) : appContext(appContext) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -69,77 +83,19 @@ Gui::~Gui() {
     ImGui::DestroyContext();
 }
 
-void Gui::showSceneWindow() {
-
-    showScene();
-
-    ImGui::Begin("Scene Window");
-
-    // Robot
-
-    bool fieldModified = false;
-    // User input for free angles.
-    ImGui::SeparatorText("Arm angles");
-    for(int i = 0; i < appContext.robot->kinematics.armRotationAngles.size(); i++) {
-        auto &angle = appContext.robot->kinematics.armRotationAngles[i];
-        fieldModified |= ImGui::SliderAngle(std::string(std::to_string(i) + ". arm").c_str(), &angle, 0.01f);
-    }
-    if(fieldModified) appContext.robot->kinematics.movementState = RobotKinematics::FreeAngles; // Change focus to free angles.
-    fieldModified = false;
-
-    // User input for needle position for inverse kinematics.
-    fieldModified |= ImGui::DragFloat3("Needle position", glm::value_ptr(appContext.robot->kinematics.needlePosition), 0.002f);
-    fieldModified |= ImGui::DragFloat3("Needle orientation", glm::value_ptr(appContext.robot->kinematics.needleOrientation), 0.002f);
-    if(fieldModified) {
-        appContext.robot->kinematics.needleOrientation = glm::normalize(appContext.robot->kinematics.needleOrientation);
-        appContext.robot->kinematics.movementState = RobotKinematics::FreeInverseKinematics;
-    }
-    fieldModified = false;
-
-    const char* items[] = { "Pi", "Infinity", "Chaotic", "Circle"};
-    int &i = reinterpret_cast<int &>(appContext.robot->kinematics.animation);
-    fieldModified |= ImGui::Combo("##combo", &i, items, IM_ARRAYSIZE(items));
-    if(fieldModified)
-        appContext.trail->reset();
-
-    bool animated = appContext.robot->kinematics.movementState == RobotKinematics::AnimatedInverseKinematics;
-    fieldModified |= ImGui::Checkbox("Animation", &animated);
-    if(fieldModified) {
-        appContext.robot->kinematics.movementState = animated ? RobotKinematics::AnimatedInverseKinematics
-                                                              : RobotKinematics::FreeAngles;
-        appContext.trail->reset();
-    }
-
-    ImGui::SameLine();
-    ImGui::Checkbox("On Fire", &appContext.robot->onFire);
-    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,100,0,200));
-    ImGui::SameLine();
-    ImGui::Text("(DANGEROUS)");
-    ImGui::PopStyleColor();
-    ImGui::SameLine();
-    ImGui::Checkbox("Transp. wall", &appContext.room->isTransparent);
-
-    // Point Light
-    drawLightUI(appContext.pointLight, 1);
-    drawLightUI(appContext.pointLight2, 2);
-
-
-    // Camera type
+void Gui::renderCameraUI() {
     ImGui::SeparatorText("Camera");
 
     const char* itemsC[] = { "Anchor", "Game like" };
-    static int chosenCamera = CameraType::GAMELIKE;
+    static int chosenCamera = GAMELIKE;
 
-    if(ImGui::Combo("Camera##combo", &(chosenCamera), itemsC, CameraType::COUNT))
-        appContext.allocateCamera(CameraType(chosenCamera));
+    if(ImGui::Combo("Camera##combo", &(chosenCamera), itemsC, COUNT))
+        appContext.allocateCamera();
 
-    if(appContext.cameraType == CameraType::GAMELIKE)
+    if(appContext.cameraType == GAMELIKE)
     {
         ImGui::DragFloat("Camera sensitivity", &(appContext.cameraSensitivity), 0.01f, 0.01f, 1.0f);
     }
-
-
-    ImGui::End();
 }
 
 void Gui::drawLightColorUI(PointLight &pointLight, int i) {
@@ -275,5 +231,63 @@ void Gui::updateCameraPos (ImVec2 canvas_sz)
         }
 
     }
+}
+
+void Gui::renderWaterUI() {
+    ImGui::SeparatorText("Water");
+    ImGui::DragFloat("Droplets per Second", &appContext.dropletsPerSec, 0.1, 0.0001, 1000);
+    ImGui::Checkbox("Debug normals", &appContext.water->debugNormal);
+}
+
+void Gui::renderSeaFloorUI() {
+    ImGui::SeparatorText("Sea Floor");
+    ImGui::DragFloat("Deepness", &appContext.seaFloor->deepness, 0.01, 0.01, 10);
+}
+
+void Gui::renderPerlinUI() {
+    auto &perlin = *appContext.perlin;
+    ImGui::SeparatorText("Perlin Noise");
+    float amp = log(perlin.amplitude);
+    if(ImGui::DragFloat("Amplitude", &amp, 0.01f, -10, 10))
+        perlin.amplitude = exp(amp);
+    float freq = log(perlin.frequency);
+    if(ImGui::DragFloat("Frequency", &freq, 0.01f))
+        perlin.frequency = exp(freq);
+    ImGui::DragFloat("Length", &perlin.length, 0.01f);
+    ImGui::DragFloat("Speed", &perlin.speed, 0.01f);
+
+}
+
+void Gui::renderSkyUI() {
+    ImGui::SeparatorText("Sky");
+    float turbidity = appContext.preethamSkyModel->turbidity();
+    if(ImGui::DragFloat("Turbidity", &turbidity, 0.01f, 1, 10)) {
+        appContext.preethamSkyModel->set_turbidity(turbidity);
+        appContext.preethamSkyModel->update();
+    }
+
+
+    glm::vec3 sun = -appContext.preethamSkyModel->direction();
+    if(ImGui::DragFloat3("Sun", glm::value_ptr(sun), 0.01f)) {
+        sun = glm::normalize(sun);
+        appContext.preethamSkyModel->set_direction(sun);
+        appContext.sunLight->direction = sun;
+        appContext.preethamSkyModel->update();
+    }
+
+
+}
+
+void Gui::renderDuckUI() {
+    ImGui::SeparatorText("Duck");
+    auto &duck = *appContext.duck;
+    ImGui::DragFloat("Submersion", &duck.submersion, 0.0001f, 0, 0.06);
+    ImGui::Separator();
+    ImGui::DragFloat("Speed##duck", &duck.speed, 0.005f);
+    ImGui::DragFloat("Track Inner Radius", &duck.trackMin, 0.005f);
+    ImGui::DragFloat("Track Outer Radius", &duck.trackRadius, 0.005f);
+    ImGui::DragFloat("Track Angle Step", &duck.trackAngleStep, 0.005f);
+    ImGui::DragFloat("Track Deviation", &duck.trackDeviation, 0.005f);
+    ImGui::Checkbox("Debug Duck Track", &duck.debugDuckTruck);
 }
 

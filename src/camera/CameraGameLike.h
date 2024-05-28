@@ -29,6 +29,8 @@ public:
     [[nodiscard]] glm::mat4 getProjectionMatrix () const override;
 
     [[nodiscard]] glm::vec3 getViewPosition () const override;
+    [[nodiscard]] float getFarPlane() const override;
+    [[nodiscard]] float getNearPlane() const override;
 
     void processKeyboard (CameraMovement direction, float deltaTime) override;
 

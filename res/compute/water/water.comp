@@ -1,0 +1,43 @@
+#version 460 core
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(rgba32f, binding = 0) uniform image2D normalMap;
+layout(rgba32f, binding = 1) uniform image2D heightMap[2];
+layout(rgba32f, binding = 3) uniform image2D dimMap;
+
+uniform int currentTexture;
+
+void main() {
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+    int x = texelCoord.x;
+    int y = texelCoord.y;
+    float gridResolution = 2048;
+
+    float h = 2.f / float(gridResolution - 1);
+    float c = 1;
+    float deltaT = 1.f / float(gridResolution);
+
+    bool b = currentTexture == 0;
+    int otherTexture = (currentTexture+1)%2;
+
+    float z_n_ip_j = x == gridResolution-1 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x+1,y)).r;
+    float z_n_im_j = x == 0 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x-1,y)).r;
+    float z_n_i_jp = y == gridResolution-1 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x,y+1)).r;
+    float z_n_i_jm = y == 0 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x,y-1)).r;
+    float z_n_i_j = imageLoad(heightMap[otherTexture], ivec2(x,y)).r;
+    float z_nm_i_j = imageLoad(heightMap[currentTexture], ivec2(x,y)).r;
+    float A = c * c * deltaT * deltaT / h / h;
+    float B = 2 - 4 * A;
+
+    float result = imageLoad(dimMap, ivec2(x, y)).r * (A * (z_n_i_jm + z_n_i_jp + z_n_im_j + z_n_ip_j) + B * z_n_i_j - z_nm_i_j);
+
+    float fx0 = x == 0 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x-1,y)).r;
+    float fx1 = x == gridResolution-1 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x+1,y)).r;
+    float fy0 = y == 0 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x,y-1)).r;
+    float fy1 = y == gridResolution-1 ? 0 : imageLoad(heightMap[otherTexture], ivec2(x,y+1)).r;
+    vec3 n = normalize(vec3((fx0 - fx1)/(2*h), 1, (fy0 - fy1)/(2*h)));
+
+    imageStore(heightMap[currentTexture], texelCoord, vec4(result));
+    imageStore(normalMap, texelCoord, vec4(n, 1));
+}

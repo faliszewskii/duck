@@ -20,24 +20,30 @@
 #include "../flame/Flame.h"
 #include "../camera/CameraGameLike.h"
 #include "../spark/SparksEntity.h"
+#include "../water/Water.h"
+#include "../light/DirLight.h"
+#include "../seaFloor/SeaFloor.h"
+#include "../sea/Sea.h"
+#include "stb/stb_perlin.h"
+#include "../perlin/Perlin.h"
+#include "../sky/Sky.h"
+#include "../duck/Duck.h"
 
 
 struct AppContext {
-    std::unique_ptr<Robot> robot;
-    std::unique_ptr<Room> room;
-    std::unique_ptr<Mirror> mirror;
-    std::unique_ptr<Cylinder> cylinder;
-    std::unique_ptr<Skybox> skybox;
-    std::unique_ptr<Trail> trail;
-    std::unique_ptr<Point> light;
-    std::unique_ptr<Point> light2;
-    std::unique_ptr<Flame> flame;
-    std::unique_ptr<SparksEntity> sparks;
+    std::unique_ptr<DirLight> sunLight;
+    std::unique_ptr<Water> water;
+    std::unique_ptr<SeaFloor> seaFloor;
+    std::unique_ptr<Sea> sea;
+    std::unique_ptr<Sky> sky;
+    std::unique_ptr<Duck> duck;
+    float dropletsPerSec = 5;
 
-    PointLight pointLight;
-    PointLight pointLight2;
+    std::unique_ptr<Perlin> perlin;
+    std::unique_ptr<Texture> perlinNoise;
+    std::unique_ptr<PreethamSkyModel> preethamSkyModel;
+
     std::unique_ptr<BaseCamera> camera;
-
     std::unique_ptr<FrameBufferManager> frameBufferManager;
 
     bool guiFocus = true;
@@ -46,16 +52,47 @@ struct AppContext {
 
     float cameraSensitivity = 0.8f;
 
+    AppContext() : frameBufferManager(), cameraType(CameraType::FREEANCHOR)
+    {
+        allocateCamera();
+        frameBufferManager = std::make_unique<FrameBufferManager>();
+        frameBufferManager->create_buffers(camera->screenWidth, camera->screenHeight);
+        sunLight = std::make_unique<DirLight>();
+        int perlinResolution = 64;
+
+        perlinNoise = std::make_unique<Texture>(perlinResolution, perlinResolution, perlinResolution, 1,GL_RED, GL_RED, GL_FLOAT, GL_TEXTURE_3D);
+        std::vector<float> perlinData(perlinResolution * perlinResolution * perlinResolution);
+        for(int x=0; x<perlinResolution; x++) {
+            for(int y=0; y<perlinResolution; y++) {
+                for(int z=0; z<perlinResolution; z++) {
+                    int id = x * perlinResolution * perlinResolution + y * perlinResolution + z;
+                    perlinData[id] = 0.5f + stb_perlin_noise3(8 * (float)x / perlinNoise->width, 8 * (float)y / perlinNoise->height, 8 * (float)z / perlinNoise->depth, 8, 8, 8);
+                }
+            }
+        }
+        perlinNoise->update3D(perlinData.data());
+        perlin = std::make_unique<Perlin>();
+
+        water = std::make_unique<Water>(*perlinNoise);
+        seaFloor = std::make_unique<SeaFloor>();
+        sea = std::make_unique<Sea>(*perlinNoise);
+        sky = std::make_unique<Sky>();
+        preethamSkyModel = std::make_unique<PreethamSkyModel>();
+        preethamSkyModel->set_direction(glm::normalize(glm::vec3({0.2, -1, 0.2})));
+        preethamSkyModel->set_turbidity(2);
+        preethamSkyModel->update();
+        duck = std::make_unique<Duck>();
+    }
+
     void glfw_window_resize(unsigned int width, unsigned int height)
     {
         camera->resize(width, height); // NOLINT(*-narrowing-conversions)
         frameBufferManager->create_buffers(camera->screenWidth, camera->screenHeight);
     }
 
-    void allocateCamera(CameraType setType)
+    void allocateCamera()
     {
-        cameraType = setType;
-        switch(setType)
+        switch(cameraType)
         {
             case CameraType::GAMELIKE:
                 if(camera != nullptr)
@@ -67,35 +104,11 @@ struct AppContext {
                     camera.reset();
                 camera = std::make_unique<CameraAnchorFree>(1920, 1080, CameraMode::ANCHOR, glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(0.f), glm::vec3(-M_PI / 4, 0, 0));
                 break;
-
+            default:
+                break;
         }
     }
 
-    AppContext() : // TODO Remove fixed screen resolution
-        frameBufferManager()
-        {
-            allocateCamera(CameraType::GAMELIKE);
-            frameBufferManager = std::make_unique<FrameBufferManager>();
-            frameBufferManager->create_buffers(camera->screenWidth, camera->screenHeight);
-
-            auto standModel = Importer::loadModel("../res/models/mesh1.txt");
-            std::vector<Model<PosNorTexVertex>> armModels;
-            armModels.reserve(5);
-            for(int i = 0; i < 5; i++)
-                armModels.push_back(Importer::loadModel("../res/models/mesh" + std::to_string(i+2) + ".txt"));
-            robot = std::make_unique<Robot>(standModel, armModels);
-            room = std::make_unique<Room>();
-            cylinder = std::make_unique<Cylinder>();
-            mirror = std::make_unique<Mirror>();
-            skybox = std::make_unique<Skybox>();
-            trail = std::make_unique<Trail>(*robot);
-            light = std::make_unique<Point>();
-            light2 = std::make_unique<Point>();
-            flame = std::make_unique<Flame>();
-            sparks = std::make_unique<SparksEntity>(*robot);
-            pointLight2.position = glm::vec3(0,3.5,0);
-            pointLight2.strength = 0;
-        }
 };
 
 

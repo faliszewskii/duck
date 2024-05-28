@@ -168,3 +168,10 @@ glm::mat4 CameraAnchorFree::getMirrorViewMatrix () const
     mirrorModel = glm::scale(mirrorModel, glm::vec3(2,2,2));
     return  myLookAt(position, position + front, up) * mirrorModel * glm::scale(glm::mat4(1), glm::vec3(-1, 1, 1)) * glm::inverse(mirrorModel);
 }
+
+float CameraAnchorFree::getFarPlane() const {
+    return farPlane;
+};
+float CameraAnchorFree::getNearPlane() const {
+    return nearPlane;
+};

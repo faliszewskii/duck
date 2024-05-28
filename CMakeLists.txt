@@ -78,6 +78,7 @@ set(APP_SRC
         src/flame/Flame.cpp
         src/flame/Flame.h
         src/mesh/PosNorTexVertex.h
+        dep/inc/stb/stb_perlin.h
         dep/inc/stb/stb_image.h
         src/texture/Texture.cpp
         src/texture/Texture.h
@@ -93,6 +94,28 @@ set(APP_SRC
         src/mesh/SparkVertex.h
         src/debug/DebugUI.h
         src/debug/DebugUI.cpp
+        src/water/Water.cpp
+        src/water/Water.h
+        src/quad/Quad.cpp
+        src/quad/Quad.h
+        src/light/DirLight.h
+        src/seaFloor/SeaFloor.cpp
+        src/seaFloor/SeaFloor.h
+        src/sea/Sea.cpp
+        src/sea/Sea.h
+        src/perlin/Perlin.h
+        src/sky/Sky.cpp
+        src/sky/Sky.h
+        src/sky/PreethamSkyModel.cpp
+        src/sky/PreethamSkyModel.h
+        src/sky/SkyModel.h
+        src/duck/Duck.cpp
+        src/duck/Duck.h
+        src/animation/Animation.cpp
+        src/animation/Animation.h
+        src/animation/KeyFrame.h
+        src/line/Line.h
+        src/bspline/Bspline.h
 )
 
 # Include directories

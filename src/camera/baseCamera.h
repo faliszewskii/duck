@@ -47,6 +47,8 @@ public:
     [[nodiscard]] virtual glm::mat4 getMirrorViewMatrix() const = 0;
     [[nodiscard]] virtual glm::mat4 getProjectionMatrix() const = 0;
     [[nodiscard]] virtual glm::vec3 getViewPosition() const = 0;
+    [[nodiscard]] virtual float getFarPlane() const = 0;
+    [[nodiscard]] virtual float getNearPlane() const = 0;
 
     virtual void processKeyboard(CameraMovement direction, float deltaTime) = 0;
     virtual void processMouseMovement(float xoffset, float yoffset) = 0;

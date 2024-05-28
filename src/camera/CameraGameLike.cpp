@@ -170,3 +170,11 @@ void CameraGameLike::resetLocation ()
     Orientation = glm::vec3(0.0f, 0.0f, 1.0f);
     Up = glm::vec3(0.0f, 1.0f, 0.0f);
 }
+
+float CameraGameLike::getFarPlane() const {
+    return farPlane;
+};
+
+float CameraGameLike::getNearPlane() const {
+    return nearPlane;
+};

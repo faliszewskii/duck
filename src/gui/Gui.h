@@ -30,6 +30,18 @@ public:
     void drawLightUI(PointLight &pointLight, int i);
 
     void drawLightColorUI(PointLight &pointLight, int i);
+
+    void renderCameraUI();
+
+    void renderWaterUI();
+
+    void renderSeaFloorUI();
+
+    void renderPerlinUI();
+
+    void renderSkyUI();
+
+    void renderDuckUI();
 };
 
 

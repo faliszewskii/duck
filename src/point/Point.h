@@ -12,23 +12,13 @@
 #include "../mesh/EmptyVertex.h"
 
 class Point {
-
+    std::unique_ptr<Mesh<EmptyVertex>> mesh;
+public:
     glm::vec3 position{};
     glm::vec4 color{1};
 
-    std::unique_ptr<Mesh<EmptyVertex>> mesh;
-
-public:
     Point() {
         mesh = std::make_unique<Mesh<EmptyVertex>>(Mesh<EmptyVertex>({EmptyVertex()}, {}, GL_POINTS));
-    }
-
-    void updatePosition(glm::vec3 pos) {
-        position = pos;
-    }
-
-    void updateColor(glm::vec4 col) {
-        color = col;
     }
 
     void render(Shader &shader) {
