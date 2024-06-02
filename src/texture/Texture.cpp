@@ -5,15 +5,14 @@
 #include <vector>
 #include "Texture.h"
 #include "../Shader.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include "common.h"
 
 Texture::Texture(const std::string& path) {
     this->target = GL_TEXTURE_2D;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
 
-    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+    unsigned char *data = TextureCommon::loadImage(path.c_str(), &width, &height, &nrChannels, 0);
 
     format = nrChannels==4 ? GL_RGBA : GL_RGB;
     glTexImage2D(
@@ -28,7 +27,7 @@ Texture::Texture(const std::string& path) {
             data
     );
     glGenerateMipmap(id);
-    stbi_image_free(data);
+    TextureCommon::freeImage(data);
 
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

@@ -116,6 +116,10 @@ set(APP_SRC
         src/animation/KeyFrame.h
         src/line/Line.h
         src/bspline/Bspline.h
+        src/texture/Cubemap.cpp
+        src/texture/Cubemap.h
+        src/texture/common.cpp
+        src/texture/common.h
 )
 
 # Include directories

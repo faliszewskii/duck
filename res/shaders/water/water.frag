@@ -9,9 +9,11 @@ uniform vec3 viewPos;
 uniform sampler2D normalMap;
 uniform sampler3D perlinNoise;
 uniform sampler2D seaFloorTexture;
+uniform samplerCube cubemapTexture;
 uniform bool debugNormal;
 uniform float time;
 uniform float deepness;
+uniform bool useCube;
 
 struct Perlin {
     float amplitude;
@@ -100,6 +102,14 @@ vec3 preetham_sky_rgb(vec3 v, vec3 sun_dir)
     return vec3(r, g, b);
 }
 
+vec3 intersectRay(vec3 p, vec3 d) {
+    vec3 tplus  = (1.0 - p) / d;
+    vec3 tminus = (-1.0 - p) / d;
+    vec3 t = max(tplus, tminus);
+    float tmp = min(t.x, min(t.y, t.z));
+    return p + tmp * d;
+}
+
 vec3 waterColor(vec3 normal, vec3 viewDir, vec3 fragPos, vec3 albedo) {
     vec3 sunDir = normalize(u_Direction);
 
@@ -117,12 +127,14 @@ vec3 waterColor(vec3 normal, vec3 viewDir, vec3 fragPos, vec3 albedo) {
     vec3 intersection = fragPos + tRfr * rfr;
     vec3 refractedColourSky = fullReflect ? vec3(0) : preetham_sky_rgb(normalize(rfr), sunDir);
     vec3 rfrColor = underwater ? refractedColourSky: texture(seaFloorTexture, intersection.xz).rgb;
+    if(useCube) rfrColor = texture(cubemapTexture, intersectRay(fragPos, rfr)).rgb;
 
     vec3 rfl = reflect(-viewDir, normal);
     rfl = normalize(rfl);
     float tRfl = (-deepness - fragPos.y) / (rfl.y);
     intersection = fragPos + tRfl * rfl;
     vec3 rflColor = underwater ? texture(seaFloorTexture, intersection.xz).rgb : preetham_sky_rgb(rfl, sunDir);
+    if(useCube) rflColor = texture(cubemapTexture, intersectRay(fragPos, rfl)).rgb;
 
     float fresnelCoeff = fullReflect ? 1 : fresnel(F0, max(dot(normal, viewDir), 0));
 

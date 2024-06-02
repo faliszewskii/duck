@@ -236,7 +236,8 @@ void Gui::updateCameraPos (ImVec2 canvas_sz)
 void Gui::renderWaterUI() {
     ImGui::SeparatorText("Water");
     ImGui::DragFloat("Droplets per Second", &appContext.dropletsPerSec, 0.1, 0.0001, 1000);
-    ImGui::Checkbox("Debug normals", &appContext.water->debugNormal);
+    ImGui::Checkbox("Debug Normals", &appContext.water->debugNormal);
+    ImGui::Checkbox("Trap The Duck", &appContext.useCube);
 }
 
 void Gui::renderSeaFloorUI() {

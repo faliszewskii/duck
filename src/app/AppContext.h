@@ -37,7 +37,9 @@ struct AppContext {
     std::unique_ptr<Sea> sea;
     std::unique_ptr<Sky> sky;
     std::unique_ptr<Duck> duck;
+    std::unique_ptr<Room> room;
     float dropletsPerSec = 5;
+    bool useCube;
 
     std::unique_ptr<Perlin> perlin;
     std::unique_ptr<Texture> perlinNoise;
@@ -82,6 +84,7 @@ struct AppContext {
         preethamSkyModel->set_turbidity(2);
         preethamSkyModel->update();
         duck = std::make_unique<Duck>();
+        room = std::make_unique<Room>();
     }
 
     void glfw_window_resize(unsigned int width, unsigned int height)

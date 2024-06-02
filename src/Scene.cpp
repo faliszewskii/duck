@@ -15,6 +15,7 @@ Scene::Scene(AppContext &appContext) :
         infiniteShader(Shader::createTraditionalShader("../res/shaders/infinite/infinite.vert", "../res/shaders/infinite/infinite.frag")),
         seaShader(Shader::createTraditionalShader("../res/shaders/sea/sea.vert", "../res/shaders/sea/sea.frag")),
         skyShader(Shader::createTraditionalShader("../res/shaders/sky/sky.vert", "../res/shaders/sky/sky.frag")),
+        cubemapShader(Shader::createTraditionalShader("../res/shaders/phong/cubemap.vert", "../res/shaders/phong/cubemap.frag")),
         waterHeightCompute(Shader::createComputeShader("../res/compute/water/water.comp")),
         appContext(appContext)
     {}
@@ -81,6 +82,9 @@ void Scene::render() {
     waterShader.setUniform("projection", appContext.camera->getProjectionMatrix());
     waterShader.setUniform("time", time);
     waterShader.setUniform("deepness", appContext.seaFloor->deepness);
+    waterShader.setUniform("useCube", appContext.useCube);
+    appContext.room->cubemap->bind(3);
+    waterShader.setUniform("cubemapTexture", 3);
     appContext.preethamSkyModel->set_render_uniforms(waterShader);
     appContext.preethamSkyModel->set_render_uniforms(waterShader);
     appContext.perlin->setup(waterShader);
@@ -124,6 +128,14 @@ void Scene::render() {
     bSplineShader.setUniform("projection", appContext.camera->getProjectionMatrix());
     if(appContext.duck->debugDuckTruck)
         appContext.duck->renderTrackCurve();
+
+    cubemapShader.use();
+    cubemapShader.setUniform("view", appContext.camera->getViewMatrix());
+    cubemapShader.setUniform("projection", appContext.camera->getProjectionMatrix());
+    cubemapShader.setUniform("viewPos", appContext.camera->getViewPosition());
+    cubemapShader.setUniform("isMirror", false);
+    appContext.sunLight->setup(cubemapShader);
+    if(appContext.useCube) appContext.room->render(cubemapShader);
 
     appContext.frameBufferManager->unbind();
 }

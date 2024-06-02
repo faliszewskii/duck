@@ -20,6 +20,7 @@ class Scene {
     Shader infiniteShader;
     Shader seaShader;
     Shader skyShader;
+    Shader cubemapShader;
 
     Shader waterHeightCompute;
 
