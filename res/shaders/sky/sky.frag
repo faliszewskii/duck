@@ -3,7 +3,7 @@
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 u_Direction;
-
+uniform vec3 viewPos;
 in vec3 direction;
 
 out vec4 fragColor;
@@ -47,6 +47,7 @@ vec3 preetham_sky_rgb(vec3 v, vec3 sun_dir)
 
 
 void main() {
+    if(viewPos.y < 0) discard;
     fragColor = vec4(preetham_sky_rgb(normalize(direction), normalize(u_Direction)), 1);
     gl_FragDepth = 0.99999;
 }

@@ -1,3 +1,4 @@
+
 #version 460 core
 
 in vec3 nearPoint;
@@ -10,6 +11,7 @@ uniform vec3 viewPos;
 uniform float yLevel;
 uniform float near;
 uniform float far;
+uniform vec3 u_Direction;
 
 struct Material {
     bool hasTexture;
@@ -49,10 +51,19 @@ void main() {
 
     vec4 objectColor = material.hasTexture? texture(material.texture, texCoords) : material.albedo;
 
+    vec3 sunDir = normalize(u_Direction);
+    float waterSunGradient = dot(normalize(viewPos), -normalize(sunDir));
+    waterSunGradient = clamp(pow(waterSunGradient*0.7+0.3,2.0),0.0,1.0);
+    vec3 waterSunColor = vec3(0.0,1.0,0.85)*waterSunGradient;
+    waterSunColor = waterSunColor*0.5;
+
+    float waterGradient = dot(normalize(viewPos), vec3(0.0,0.0,-1.0));
+    waterGradient = clamp((waterGradient*0.5+0.5),0.2,1.0);
+    vec3 scatteringColor = (vec3(0.0078, 0.5176, 0.700)+waterSunColor)*waterGradient*1.5;
     float depthColorScale = 1 / 20.f;
-    vec3 scatteringColor = vec3(0,1.0,0.95)/3.f;
     float depth = length(fragPos3D - viewPos);
-    vec3 color = mix(objectColor.rgb, scatteringColor, clamp(depth*depthColorScale, 0, 1));
+
+    vec3 color = mix(objectColor.rgb, scatteringColor/3.f, clamp(depth*depthColorScale/2, 0, 1));
 
     fragColor = vec4(color, objectColor.a * fading);
 }

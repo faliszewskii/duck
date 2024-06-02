@@ -161,7 +161,7 @@ vec3 waterColor(vec3 normal, vec3 viewDir, vec3 fragPos, vec3 albedo) {
     vec3 scatteringColor = watercolor;
     if(underwater) {
         float depth = length(tRfl * rfl);
-        rflColor = mix(rflColor, scatteringColor/3.f, clamp(depth*depthColorScale, 0, 1));
+        rflColor = mix(rflColor, scatteringColor/3.f, clamp(depth*depthColorScale/2, 0, 1));
     } else {
         float depth = length(tRfr * rfr);
         rfrColor = mix(rfrColor, scatteringColor, clamp(depth*depthColorScale, 0, 1));

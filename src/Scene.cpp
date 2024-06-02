@@ -73,6 +73,7 @@ void Scene::render() {
     infiniteShader.setUniform("projection", appContext.camera->getProjectionMatrix());
     infiniteShader.setUniform("far", appContext.camera->getFarPlane());
     infiniteShader.setUniform("near", appContext.camera->getNearPlane());
+    appContext.preethamSkyModel->set_render_uniforms(infiniteShader);
     appContext.sunLight->setup(infiniteShader);
     appContext.seaFloor->render(infiniteShader);
 
